@@ -1,3 +1,4 @@
+from tags.basic import MetaTitle, MetaBundle
 from tags.core import BaseTag
 from templates.simple import SimpleTemplate
 
@@ -39,9 +40,43 @@ def test_base_tag():
     ]
     keys = {'name': 'Druzhok', 'color': 'red'}
     template = SimpleTemplate(templates=templates, keys=keys).create_all()
-    html_template = '<title>{name}</title>'
+    html_template = '<title>{value}</title>'
     for t in template:
         tag = BaseTag(name='title', value=t, html_template=html_template)
-        print(tag.as_dict)
-        print(tag.as_json)
-        print(tag.as_html)
+        try:
+            assert tag.as_dict
+            assert tag.as_json
+            assert tag.as_html
+            assert True
+        except Exception as e:
+            raise e
+
+
+def test_meta_tag():
+    templates = [
+        'My doggy name is {name} with color {color}',
+        'Name of my doggy is {name}',
+        'Color of my doggy is {color}'
+    ]
+    keys = {'name': 'Druzhok', 'color': 'red'}
+    template = SimpleTemplate(templates=templates, keys=keys).create_all()
+    for t in template:
+        tag = MetaTitle(value=t)
+        try:
+            assert tag.as_dict
+            assert tag.as_json
+            assert tag.as_html
+            assert True
+        except Exception as e:
+            raise e
+
+        try:
+            tag_strict = MetaTitle(value=t, strict=True)
+            assert False
+        except ValueError as e:
+            assert True
+
+
+def test_bundle():
+    bundle = MetaBundle()
+    print(bundle.as_html())

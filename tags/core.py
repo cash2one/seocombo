@@ -1,5 +1,6 @@
 import json
 import warnings
+import inspect
 
 
 class BaseTag(object):
@@ -79,11 +80,14 @@ class BaseTag(object):
         v = str(v)
         v_len = len(v)
         if not self.max_length >= v_len >= self.min_length:
-            message = '{name} value length must be gte {min} and lte {max}' \
-                .format(
+            message = '''
+            {name} value length must be
+            gte {min} and lte {max}, current: {cur}
+            ''' .format(
                 name=self.name,
                 min=self.min_length,
-                max=self.max_length
+                max=self.max_length,
+                cur=v_len
             )
             if self.strict:
                 raise ValueError(message)
@@ -99,7 +103,7 @@ class BaseTag(object):
     def html_template(self, h):
         if h:
             try:
-                self._html_tempate = h.format(name=self.value)
+                self._html_tempate = h.format(value=self.value)
             except KeyError:
                 raise KeyError("""
                 your html_template should contain the key name.
@@ -118,3 +122,11 @@ class BaseTag(object):
     @property
     def as_html(self):
         return self.html_template
+
+class BaseBundle(object):
+
+    name = None
+    fields = ()
+
+    def as_html(self):
+        return ''.join([s.as_html for s in self.fields])

@@ -3,12 +3,18 @@ from .fields import BaseCharField
 
 class MetaTitle(BaseCharField):
     _html_template = '<title>{value}</title>'
+    _name = 'title'
+    _min_length = 50
+    _max_length = 80
+
 
     def __init__(self, value=None, html_template: str = None, strict: bool = False,
-                 required: bool = True, **kwargs):
+                 required: bool = True, name=None, **kwargs):
         if html_template:
             self._html_template = html_template
-        super().__init__(name='title', max_length=80, min_length=50,
+        if name:
+            self._name = name
+        super().__init__(name=self._name, min_length=self._min_length, max_length=self._max_length,
                          value=value, strict=strict, required=required,
                          html_template=self._html_template, **kwargs)
 

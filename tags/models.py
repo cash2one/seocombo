@@ -1,55 +1,87 @@
 import json
 from collections import OrderedDict
+from itertools import chain
 
 
+class MetaModel(type):
+    def __new__(cls, name, bases, attrs):
+        super_new = super(MetaModel, cls).__new__
 
-class Model(object):
+        fields = {}
+        for name in list(attrs.keys())[:]:
+            if not name.startswith('_'):
+                v = attrs[name]
+                if hasattr(v, '_modelfield'):
+                    field = attrs.pop(name)
+                    fields[name] = field
 
+        parents = [b for b in bases if isinstance(b, MetaModel)]
+        if not parents:
+            return super_new(cls, name, bases, attrs)
+
+        module = attrs.pop('__module__')
+        new_class = super_new(cls, name, bases, {'__module__': module})
+
+        new_class.fields = fields
+        for i in attrs:
+            setattr(new_class, i, attrs[i])
+
+        return new_class
+
+
+class Model(object, metaclass=MetaModel):
     def __init__(self, label=None, **kwargs):
-        self._fields = None
         self.label = label
-        self.fields = OrderedDict()
+        self.values = {}
+        # self.fields = None
 
-        if self._fields is None:
-            fields = OrderedDict()
-            for name in dir(self):
-                if not name.startswith('_'):
-                    unbound_field = getattr(self, name)
-                    if hasattr(unbound_field, '_modelfield'):
-                        fields[name] = unbound_field
-            self._fields = fields
+        # if self.fields is None:
+        #     fields = OrderedDict()
+        #     for name in dir(self):
+        #         if not name.startswith('_'):
+        #             unbound_field = getattr(self, name)
+        #             if hasattr(unbound_field, '_modelfield'):
+        #                 fields[name] = unbound_field
+        #     self.fields = fields
 
-        self.__init_fields__(**kwargs)
+        self.init_fields(**kwargs)
 
-        self.__init_fields__(**kwargs)
+    def __getattr__(self, item):
+        try:
+            return getattr(self, item)
+        except:
+            return self.fields[item].__class__(self.values[item])
 
-    def __init_fields__(self, **kwargs):
+    def __setattr(self, key, value):
+        field = self.fields.get(key, None)
+        if field:
+            self.values[key] = field.sanitize(value)
+
+    def __getattr(self, item):
+        if item in self.values:
+            return self.values[item]
+
+    def init_fields(self, **kwargs):
+        print(kwargs, '//'*10)
         for k, v in kwargs.items():
-            if self.fields.get(k, None):
-                self.fields[k].__setattr__('value', v)
-
-    @property
-    def fields(self):
-        return self._fields
-
-    @fields.setter
-    def fields(self, fields):
-        pass
+            # setattr(self, k, v)
+            self.__setattr(k, v)
 
     def validate(self):
         for f, v in self.fields.items():
             try:
-                v.validate()
+                # v.validate()
+                pass
             except ValueError as e:
                 raise e
 
-
     def as_dict(self):
-        result = OrderedDict()
-        for f, v in self.fields.items():
-            v.validate()
-            result.update(v.as_dict())
-        return result
+        # result = OrderedDict()
+        # print('**' * 10, [(k,v.value) for k,v in self.fields.items()])
+        # for f, v in self.fields.items():
+        #     v.validate()
+        #     result.update(v.as_dict())
+        return self.values
 
     def as_json(self):
         return json.dumps(self.as_dict())

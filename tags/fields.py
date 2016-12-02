@@ -27,16 +27,12 @@ class BaseField(object):
     def __str__(self):
         return self.value
 
-    def __set__(self, instance, value):
-        self.value = value
-        return self
-
-    def __get__(self, instance, owner):
-        return self
-
     def validate(self):
         # overwrite this method if you wanna add an a custom validation
         return True
+
+    def sanitize(self, data):
+        return data
 
     @property
     def name(self):

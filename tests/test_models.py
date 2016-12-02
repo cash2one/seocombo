@@ -5,16 +5,25 @@ class SimpleModel(Model):
     title = MetaTitle(strict=False)
     description = MetaDescription(strict=False)
     keywords = MetaKeywords(strict=False)
+    title2 = MetaTitle(strict=False, name='title2')
 
 
 
 def test_model():
-    obj = SimpleModel(title='QWERTY111', description='ASDSAD', keywords='keywords')
-    obj.description = 'DESCRIPTION'
-    obj.keywords = 'LET'
-    print('*'*99, obj.validate())
+    obj = SimpleModel(title='QWERTY111', description='ASDSAD', keywords='keywords', title2='TITLE@')
     print(obj.title.as_dict())
-    print(obj.description.as_html())
+    print('+'*99, obj.validate())
     print(obj.as_dict())
-    print(obj.as_json())
-    print(obj.as_html(pretty=True))
+
+    print('==='*99)
+
+    obj1 = SimpleModel(title='23', description='34', keywords='23', title2='34@')
+
+    print('*' * 99, obj1.validate())
+    print(obj1.as_dict())
+
+    print('===' * 99)
+
+    print('*' * 99, obj.validate())
+    print(obj.as_dict())
+

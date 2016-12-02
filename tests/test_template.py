@@ -72,6 +72,7 @@ def test_meta_tag():
 
         try:
             tag_strict = MetaTitle(value=t, strict=True)
+            tag_strict.validate()
             assert False
         except ValueError:
             assert True

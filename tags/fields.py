@@ -1,6 +1,8 @@
 import json
 import warnings
 
+from tags.exceptions import HtmlTemplateException
+
 
 class BaseField(object):
     def __init__(self, name: str, value: str = None, strict=False,
@@ -20,11 +22,17 @@ class BaseField(object):
         self.required = required
         self.value = value
         self.html_template = html_template
-        # Make validation
-        self.validate()
+        self._modelfield=True
 
     def __str__(self):
         return self.value
+
+    def __set__(self, instance, value):
+        self.value = value
+        return self
+
+    def __get__(self, instance, owner):
+        return self
 
     def validate(self):
         # overwrite this method if you wanna add an a custom validation
@@ -48,34 +56,17 @@ class BaseField(object):
     def value(self, v):
         self._value = v
 
-    @property
-    def html_template(self):
-        return self._html_tempate
-
-    @html_template.setter
-    def html_template(self, h):
-        self._html_tempate = str(h)
-        if h:
-            try:
-                self._html_tempate = h.format(value=self.value)
-            except KeyError:
-                raise KeyError("""
-                    your html_template should contain the key name.
-                    For example: '<title>{value}</title>'""")
-        else:
-            self._html_tempate = ''
-
-    @property
     def as_dict(self):
         return {self.name: self.value}
 
-    @property
     def as_json(self):
         return json.dumps(self.as_dict)
 
-    @property
     def as_html(self):
-        return self.html_template
+        try:
+            return self.html_template.format(value=self.value)
+        except (KeyError, AttributeError):
+            raise HtmlTemplateException(message="""your html_template should contain the key name.For example: '<title>{value}</title>'""")
 
 
 class BaseCharField(BaseField):
